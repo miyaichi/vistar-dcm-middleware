@@ -170,16 +170,22 @@ This ensures each player only requests compatible creative types.
 
 ---
 
-## Anticipated Integration Health Metrics
+## Target Integration Health Metrics
 
-Based on our approach, we expect to achieve:
+Based on our implementation approach and Vistar's requirements, our targets are:
 
-| Metric | Target | Broadsign Typical | Our Approach Advantage |
-|--------|--------|-------------------|----------------------|
-| **Spend Rate** | 95%+ | 85-90% | +5-10% via caching |
-| **Display Time Latency** | 1-5 sec | 5-30 sec | 80% reduction |
-| **Cache Hit Rate** | 90%+ | N/A | New capability |
-| **PoP Success Rate** | 99%+ | 95%+ | Retry mechanism |
+| Metric | Vistar Requirement | Our Target | Implementation Strategy |
+|--------|-------------------|-----------|------------------------|
+| **Spend Rate** | >90% | **>90%** (aim for 95%+) | Creative caching + reliable PoP |
+| **Display Time Latency** | <15 min (900 sec) | **<60 sec** | Local cache delivery |
+| **Cache Hit Rate** | N/A | **85%+** | Hourly cache updates |
+| **PoP Time Latency** | <15 min | **<5 min** | HTML onload + retry |
+
+**Important Notes:**
+- Targets are based on Vistar's documented requirements and our Creative Caching implementation
+- Actual metrics will be measured and validated during integration testing phases
+- Performance may vary based on network conditions, campaign parameters, and deployment environment
+- We will work with Vistar team to optimize metrics based on real-world testing data
 
 ---
 
