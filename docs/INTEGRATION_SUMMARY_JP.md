@@ -251,7 +251,7 @@ const PLAYER_CONFIGS = {
 https://github.com/miyaichi/vistar-dcm-middleware
 
 **プロジェクトリード：**  
-宮一 佳彦 (yoshihiko.miyaichi@pier1.co.jp)
+Yoshihiko Miyaichi (yoshihiko.miyaichi@pier1.co.jp)
 
 **Vistar Media担当：**
 - Janice Ong (Manager, Supply Operations APAC)

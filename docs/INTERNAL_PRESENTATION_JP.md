@@ -334,17 +334,5 @@ https://github.com/miyaichi/vistar-dcm-middleware
 
 ---
 
-## ご質問・ご相談
-
-プロジェクトに関するご質問やご相談は、以下までお気軽にご連絡ください。
-
-**プロジェクトリード**
-Yoshihiko Miyaichi
-yoshihiko.miyaichi@pier1.co.jp
-
 **プロジェクト資料**
 GitHub: https://github.com/miyaichi/vistar-dcm-middleware
-
----
-
-ありがとうございました

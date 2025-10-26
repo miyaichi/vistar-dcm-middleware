@@ -204,7 +204,6 @@ Before we proceed with full implementation, we'd appreciate confirmation on:
 - **Q:** Any special considerations for USDP-R1000 (no HTML support)?
 
 ### 3. **Testing Process**
-- **Q:** Can we schedule an initial testing call once Phase 1 is complete (estimated 2 weeks)?
 - **Q:** What are the minimum requirements to proceed to Initial Integration Test?
 
 ### 4. **Dynamic Creative Requirements**
