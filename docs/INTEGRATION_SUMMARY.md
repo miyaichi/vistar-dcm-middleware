@@ -16,14 +16,16 @@
 | Real-time Delivery | Only option | Cached + fallback |
 | Stability | Network-dependent | Offline-resilient |
 | Expected Spend Rate | 85-90% | **95%+** |
+| Display Time Latency | 5-30 sec | **<60 sec** (1-5 sec with cache hit) |
 
 ## Three Core Enhancements
 
 ### 1. Creative Caching (Primary Value-Add)
 - Hourly background updates via Vistar Creative Caching API
 - Local filesystem storage
-- Instant delivery from cache (1-5 sec vs 5-30 sec)
+- Instant delivery from cache (1-5 sec typical)
 - Network interruption resilience
+- Target: <60 seconds display time latency (Vistar requirement: <15 min)
 
 ### 2. Player-Specific Optimization
 ```
