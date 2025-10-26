@@ -282,10 +282,6 @@ https://github.com/miyaichi/vistar-dcm-middleware
 - 概要（英語）：`docs/INTEGRATION_SUMMARY.md`
 - 概要（日本語）：`docs/INTEGRATION_SUMMARY_JP.md`
 
-### 連絡先
-- プロジェクトリード：宮一 佳彦
-- Email: yoshihiko.miyaichi@pier1.co.jp
-
 ---
 
 ## Q&A
