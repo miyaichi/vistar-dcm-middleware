@@ -21,15 +21,17 @@ This middleware server acts as a bridge between DCM and Vistar Media's Ad Servin
     - USDP-R1000
 ```
 
-## Features
+## Planned Features
 
-- ✅ **Ad Request/Response Handling** - Interfaces with Vistar Ad Serving API
-- ✅ **Proof of Play (PoP) Tracking** - Accurate playback confirmation within 15 minutes
-- ✅ **Creative Caching** - Offline resilience using Vistar Creative Caching API
-- ✅ **Multi-Player Support** - Optimized for different MEDIAEDGE player models
-- ✅ **Dynamic Creative Support** - Real-time creative generation
-- ✅ **HTML5 Player Generation** - Dynamic HTML generation for DCM URI assets
-- ✅ **Monitoring & Diagnostics** - Built-in metrics for Vistar integration health
+- 🚧 **Ad Request/Response Handling** - Interfaces with Vistar Ad Serving API
+- 🚧 **Proof of Play (PoP) Tracking** - Accurate playback confirmation within 15 minutes
+- 📋 **Creative Caching** - Offline resilience using Vistar Creative Caching API (Phase 2)
+- 📋 **Multi-Player Support** - Optimized for different MEDIAEDGE player models (Phase 3)
+- 📋 **Dynamic Creative Support** - Real-time creative generation
+- 🚧 **HTML5 Player Generation** - Dynamic HTML generation for DCM URI assets
+- 📋 **Monitoring & Diagnostics** - Built-in metrics for Vistar integration health (Phase 4)
+
+**Legend:** ✅ Completed | 🚧 In Progress | 📋 Planned
 
 ## Supported Players
 
@@ -41,9 +43,11 @@ This middleware server acts as a bridge between DCM and Vistar Media's Ad Servin
 
 ## Project Status
 
-- **Current Phase**: Initial Development
+- **Current Phase**: Phase 1 - Initial Development (Week 1-2)
 - **Version**: 0.1.0-alpha
-- **Vistar Integration Status**: Staging Environment Testing
+- **Vistar Integration Status**: Planning & Initial Implementation
+- **Repository**: https://github.com/miyaichi/vistar-dcm-middleware
+- **Last Updated**: October 26, 2025
 
 ## Quick Start
 
@@ -158,7 +162,7 @@ Player-specific settings are configured in `src/config/players.js`:
 2. Add URI material to playlist
 3. Schedule playlist with appropriate timing
 
-For detailed DCM setup instructions, see [docs/DCM_SETUP.md](docs/DCM_SETUP.md)
+DCM setup instructions will be added as the project progresses.
 
 ## API Endpoints
 
@@ -202,7 +206,7 @@ GET /metrics
 
 Prometheus-compatible metrics endpoint.
 
-For complete API documentation, see [docs/API.md](docs/API.md)
+API documentation will be added as endpoints are implemented.
 
 ## Development
 
@@ -302,7 +306,7 @@ docker-compose logs -f middleware | grep ERROR
 - [ ] Spend rate > 90%
 - [ ] No black screens or skipped spots
 
-See [docs/VISTAR_INTEGRATION.md](docs/VISTAR_INTEGRATION.md) for detailed testing guide.
+See [docs/INTEGRATION_APPROACH.md](docs/INTEGRATION_APPROACH.md) for integration planning and approach.
 
 ## Deployment
 
@@ -329,7 +333,7 @@ pm2 save
 
 Ensure correct API URLs and credentials for each environment.
 
-For detailed deployment instructions, see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
+Deployment instructions will be added as the project reaches production readiness.
 
 ## Troubleshooting
 
@@ -350,16 +354,24 @@ For detailed deployment instructions, see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.m
 - Verify cache directory permissions
 - Check disk space availability
 
-See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for more solutions.
+A comprehensive troubleshooting guide will be added based on real-world deployment experience.
 
 ## Documentation
 
-- [Architecture Overview](docs/ARCHITECTURE.md)
-- [Vistar Integration Guide](docs/VISTAR_INTEGRATION.md)
-- [DCM Setup Guide](docs/DCM_SETUP.md)
-- [Deployment Guide](docs/DEPLOYMENT.md)
-- [API Reference](docs/API.md)
-- [Troubleshooting](docs/TROUBLESHOOTING.md)
+### English
+- [Architecture Diagrams](docs/ARCHITECTURE_DIAGRAMS.md) - Detailed system architecture and flow diagrams
+- [Integration Approach](docs/INTEGRATION_APPROACH.md) - Technical implementation plan and strategy
+- [Integration Summary](docs/INTEGRATION_SUMMARY.md) - Quick summary of the integration approach
+
+### Japanese (日本語)
+- [統合アプローチ概要](docs/INTEGRATION_SUMMARY_JP.md) - 統合アプローチの簡潔なサマリー
+- [社内向けプレゼンテーション](docs/INTERNAL_PRESENTATION_JP.md) - プロジェクト説明資料
+
+### Additional Documentation (To Be Added)
+- API Reference - Will be added as endpoints are implemented
+- DCM Setup Guide - Will be added during integration testing
+- Deployment Guide - Will be added for production deployment
+- Troubleshooting Guide - Will be added based on real-world experience
 
 ## Contributing
 
@@ -387,9 +399,10 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) file for
 - [MEDIAEDGE DCM](https://www.mediaedge.co.jp/)
 - [Project Issues](https://github.com/miyaichi/vistar-dcm-middleware/issues)
 
-### Vistar Media Support
+### Vistar Media Contacts
 - Manager, Supply Operations APAC: Janice Ong (jong@vistarmedia.com)
-- Integration Support: See Vistar Media documentation
+- Technical Contact: Kurt Woodford (kwoodford@vistarmedia.com)
+- Integration Documentation: See [docs/INTEGRATION_APPROACH.md](docs/INTEGRATION_APPROACH.md)
 
 ## Acknowledgments
 
@@ -397,33 +410,52 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) file for
 - MEDIAEDGE for DCM platform
 - Contributors to this project
 
-## Roadmap
+## Development Roadmap
 
-### Version 0.1.0 (Current - PoC)
-- [x] Project setup
-- [ ] Basic ad request/response handling
-- [ ] Simple HTML generation
-- [ ] PoP tracking
-- [ ] Initial Vistar staging testing
+For detailed development timeline, see [docs/INTEGRATION_APPROACH.md](docs/INTEGRATION_APPROACH.md)
 
-### Version 0.2.0
-- [ ] Creative caching implementation
-- [ ] Multi-player support
-- [ ] Error handling improvements
-- [ ] Basic monitoring
+### Phase 1: Minimal Viable Integration (Week 1-2) - **Current**
+- [x] Project setup and repository creation
+- [ ] Ad Request API integration
+- [ ] Simple HTML5 player generation
+- [ ] Basic PoP implementation
+- [ ] Initial staging environment testing
+- **Milestone:** First ad displays on test player
 
-### Version 0.3.0
-- [ ] Dynamic creative support
-- [ ] Advanced caching strategies
+### Phase 2: Creative Caching (Week 3)
+- [ ] Creative Caching API integration
+- [ ] Local cache management
+- [ ] Cache hit/miss handling
+- [ ] Background cache updates
+- **Milestone:** Ads display even during network interruption
+
+### Phase 3: Multi-Player Support (Week 4)
+- [ ] Player detection logic
+- [ ] Per-model supported_media configuration
+- [ ] HTML generation variations
+- [ ] USDP-R1000 direct file support
+- **Milestone:** All player types working correctly
+
+### Phase 4: Production Readiness (Week 5-6)
+- [ ] Monitoring and metrics
+- [ ] Error handling refinement
 - [ ] Performance optimization
-- [ ] Comprehensive testing
+- [ ] Documentation completion
+- **Milestone:** Ready for Vistar Certification Test
 
-### Version 1.0.0
-- [ ] Production readiness
-- [ ] Full documentation
-- [ ] Vistar certification complete
-- [ ] Production deployment
+### Target Integration Health Metrics
+
+Based on our implementation approach with Creative Caching:
+
+| Metric | Vistar Requirement | Our Target | Strategy |
+|--------|-------------------|-----------|----------|
+| **Spend Rate** | >90% | **>95%** | Creative caching + reliable PoP |
+| **Display Time Latency** | <15 min (900 sec) | **<60 sec** | Local cache delivery |
+| **Cache Hit Rate** | N/A | **85%+** | Hourly cache updates |
+| **PoP Time Latency** | <15 min | **<5 min** | HTML onload + retry |
+
+**Note:** Targets are based on Vistar's requirements and our Creative Caching implementation. Actual metrics will be validated during integration testing phases.
 
 ## Version History
 
-- **0.1.0-alpha** (2025-10-26): Initial project setup
+- **0.1.0-alpha** (2025-10-26): Initial project setup and documentation
