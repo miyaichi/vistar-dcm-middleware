@@ -475,29 +475,35 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) file for
 
 For detailed development timeline, see [docs/INTEGRATION_APPROACH.md](docs/INTEGRATION_APPROACH.md)
 
-### Phase 1: Minimal Viable Integration (Week 1-2) - **Current**
-- [x] Project setup and repository creation
-- [ ] Ad Request API integration
-- [ ] Simple HTML5 player generation
-- [ ] Basic PoP implementation
-- [ ] Initial staging environment testing
-- **Milestone:** First ad displays on test player
+### Phase 1: Stubbed Middleware & Observability (Weeks 1-2) - ✅ Completed
+- [x] Project scaffold, Docker runtime, `.env` workflow
+- [x] Stub ad/PoP/cache/metrics endpoints with request validation
+- [x] Cache controls (invalidate/clear, size cap) and Prometheus counters
+- [x] API auth toggle, structured logging, graceful shutdown
+- [x] Jest + Supertest integration coverage
+- **Milestone:** Middleware runs end-to-end locally & in Docker without Vistar access
 
-### Phase 2: Creative Caching (Week 3)
-- [ ] Creative Caching API integration
-- [ ] Local cache management
-- [ ] Cache hit/miss handling
-- [ ] Background cache updates
-- **Milestone:** Ads display even during network interruption
+### Phase 2: Vistar Media API Integration (Weeks 3-4) - **Current**
+- [ ] Implement live Ad Request API call path in `vistarClient`
+- [ ] Surface Vistar success/failure metrics & retries
+- [ ] Validate required credentials/config when `MOCK_VISTAR_API=false`
+- [ ] Begin HTML payload shaping for MEDIAEDGE players
+- **Milestone:** First live Vistar response cached and returned to DCM
 
-### Phase 3: Multi-Player Support (Week 4)
+### Phase 3: Creative Caching Enhancements (Week 5)
+- [ ] Creative Caching API integration + persistence
+- [ ] Background refresh workers & cache warmup tooling
+- [ ] Cache hit/miss dashboards and alerting thresholds
+- **Milestone:** Ads display even during extended network interruptions
+
+### Phase 4: Multi-Player Support (Week 6)
 - [ ] Player detection logic
 - [ ] Per-model supported_media configuration
 - [ ] HTML generation variations
 - [ ] USDP-R1000 direct file support
 - **Milestone:** All player types working correctly
 
-### Phase 4: Production Readiness (Week 5-6)
+### Phase 5: Production Readiness (Weeks 7-8)
 - [ ] Monitoring and metrics
 - [ ] Error handling refinement
 - [ ] Performance optimization
