@@ -1,5 +1,12 @@
-const fetch = require('node-fetch');
 const logger = require('../utils/logger');
+
+const fetchFn = (...args) => {
+  if (typeof fetch === 'function') {
+    return fetch(...args);
+  }
+
+  return import('node-fetch').then(({ default: nodeFetch }) => nodeFetch(...args));
+};
 
 const {
   VISTAR_API_URL = 'https://sandbox-api.vistarmedia.com',
@@ -31,7 +38,7 @@ const fetchAdFromApi = async (placementId) => {
   const timeout = setTimeout(() => controller.abort(), VISTAR_TIMEOUT_MS);
 
   try {
-    const response = await fetch(`${VISTAR_API_URL}/ad-request`, {
+    const response = await fetchFn(`${VISTAR_API_URL}/ad-request`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
