@@ -120,6 +120,14 @@ curl -H "X-API-Token: change-me" "http://localhost:3000/ad?placementId=demo-scre
 
 Requests without the token are rejected with `401 Unauthorized`, letting you integrate upstream systems safely even before the Vistar API calls are implemented.
 
+With metrics enabled you also get counters for:
+- `vistar_stub_ad_requests_total`
+- `vistar_stub_cache_hits_total`
+- `vistar_stub_cache_misses_total`
+- `vistar_stub_pop_callbacks_total`
+
+Use them to validate caching behavior and PoP traffic before wiring the live Vistar API calls.
+
 ## Configuration
 
 ### Environment Variables

@@ -1,6 +1,6 @@
 const logger = require('../utils/logger');
 const cacheManager = require('../services/cacheManager');
-const { recordAdRequest } = require('./metrics');
+const { recordAdRequest, recordCacheHit, recordCacheMiss } = require('./metrics');
 
 const stubCreativePayload = (placementId) => {
   const ttlSeconds = parseInt(process.env.CACHE_TTL_SECONDS, 10) || 60;
@@ -28,6 +28,7 @@ const handleAdRequest = async (req, res, next) => {
     if (cached) {
       logger.debug('Serving stub ad payload from cache', { placementId });
       recordAdRequest();
+      recordCacheHit();
       return res.json({
         source: 'cache',
         payload: cached
@@ -38,6 +39,7 @@ const handleAdRequest = async (req, res, next) => {
     cacheManager.setCachedAd(placementId, payload, payload.ttlSeconds);
 
     recordAdRequest();
+    recordCacheMiss();
 
     res.json({
       source: 'stub',

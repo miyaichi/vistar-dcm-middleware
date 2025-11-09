@@ -1,4 +1,5 @@
 const logger = require('../utils/logger');
+const { recordProofOfPlay } = require('./metrics');
 
 const handleProofOfPlay = (req, res, next) => {
   try {
@@ -8,6 +9,8 @@ const handleProofOfPlay = (req, res, next) => {
       eventId,
       query: req.query
     });
+
+    recordProofOfPlay();
 
     res.json({
       status: 'acknowledged',

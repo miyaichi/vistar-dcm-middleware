@@ -9,7 +9,28 @@ const adRequestCounter = new client.Counter({
   registers: [register]
 });
 
+const cacheHitCounter = new client.Counter({
+  name: 'vistar_stub_cache_hits_total',
+  help: 'Number of ad responses served from cache',
+  registers: [register]
+});
+
+const cacheMissCounter = new client.Counter({
+  name: 'vistar_stub_cache_misses_total',
+  help: 'Number of ad responses requiring fresh generation',
+  registers: [register]
+});
+
+const proofOfPlayCounter = new client.Counter({
+  name: 'vistar_stub_pop_callbacks_total',
+  help: 'Total proof-of-play callbacks received',
+  registers: [register]
+});
+
 const recordAdRequest = () => adRequestCounter.inc();
+const recordCacheHit = () => cacheHitCounter.inc();
+const recordCacheMiss = () => cacheMissCounter.inc();
+const recordProofOfPlay = () => proofOfPlayCounter.inc();
 
 const getMetrics = async (req, res, next) => {
   try {
@@ -23,5 +44,8 @@ const getMetrics = async (req, res, next) => {
 
 module.exports = {
   getMetrics,
-  recordAdRequest
+  recordAdRequest,
+  recordCacheHit,
+  recordCacheMiss,
+  recordProofOfPlay
 };
