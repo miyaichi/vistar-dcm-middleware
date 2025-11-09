@@ -114,6 +114,7 @@ The current build includes lightweight stub controllers so the service can run e
 | `POST /cache/invalidate` | Remove one cached placement by sending `{"placementId":"demo"}` | `curl -XPOST -H "Content-Type: application/json" -d '{"placementId":"demo"}' http://localhost:3000/cache/invalidate` |
 | `POST /cache/clear` | Flush the entire cache when you need a blank slate | `curl -XPOST http://localhost:3000/cache/clear` |
 
+`/ad` also accepts optional overrides: `deviceId`, `venueId`, and `playerModel` (ME-DEC, USDP-R5000, USDP-R2200, USDP-R1000, USDP-R500). These feed directly into the Vistar API payload once live mode is enabled.
 > **Tip:** Copy `.env.example` to `.env` (or export environment variables) before running `docker-compose up -d` so that rate limits, logging, and metrics flags are configured the way you expect.
 
 > Docker Compose automatically reads the `.env` file that sits next to `docker-compose.yml`, so the container now boots with the same values you use for local `npm start`.
@@ -135,6 +136,8 @@ With metrics enabled you also get counters for:
 - `vistar_stub_cache_hits_total`
 - `vistar_stub_cache_misses_total`
 - `vistar_stub_pop_callbacks_total`
+- `vistar_api_success_total`
+- `vistar_api_failure_total`
 
 Use them to validate caching behavior and PoP traffic before wiring the live Vistar API calls.
 
@@ -146,12 +149,17 @@ The middleware now ships with a Vistar API client scaffold. By default it runs i
 MOCK_VISTAR_API=true   # default; uses local stub creative
 MOCK_VISTAR_API=false  # calls the configured Vistar endpoint
 VISTAR_API_URL=https://sandbox-api.vistarmedia.com
+VISTAR_MAX_RETRIES=1
+VISTAR_RETRY_DELAY_MS=250
 VISTAR_NETWORK_ID=your_network
 VISTAR_API_KEY=your_api_key
 VISTAR_TIMEOUT_MS=5000
+DEFAULT_DEVICE_ID=dcm_default_device
+DEFAULT_VENUE_ID=dcm_default_venue
+DEFAULT_DISPLAY_AREA_ID=main-display
 ```
 
-When `MOCK_VISTAR_API=false`, the middleware routes ad requests through `src/clients/vistarClient.js`, caches the response, and surfaces failures via the standard Express error handler and Prometheus counters. This is the entry point for the upcoming real Vistar Media integration work.
+When `MOCK_VISTAR_API=false`, the middleware routes ad requests through `src/clients/vistarClient.js`, validates that `VISTAR_NETWORK_ID`/`VISTAR_API_KEY` plus default device/venue identifiers are set, and then caches the live Vistar response. Failures bubble through the Express error handler and increment `vistar_api_failure_total`, making it easy to spot credential or network issues.
 
 ## Configuration
 

@@ -1,5 +1,8 @@
 const request = require('supertest');
 
+const originalEnv = { ...process.env };
+const originalFetch = global.fetch;
+
 const loadApp = (envOverrides = {}) => {
   jest.resetModules();
   process.env = {
@@ -14,9 +17,9 @@ const loadApp = (envOverrides = {}) => {
   return require('../../src/server');
 };
 
-const originalEnv = { ...process.env };
 afterEach(() => {
   process.env = { ...originalEnv };
+  global.fetch = originalFetch;
 });
 
 describe('Vistar DCM Middleware (stub)', () => {
@@ -175,5 +178,46 @@ describe('Vistar DCM Middleware (stub)', () => {
 
     expect(response.body.source).toBe('stub');
     expect(response.body.message).toMatch(/Stub response/);
+  });
+
+  test('Live Vistar mode requires credentials', async () => {
+    const app = loadApp({
+      MOCK_VISTAR_API: 'false',
+      VISTAR_NETWORK_ID: '',
+      VISTAR_API_KEY: ''
+    });
+
+    const response = await request(app)
+      .get('/ad')
+      .query({ placementId: 'live-config-error' })
+      .expect(500);
+
+    expect(response.body.message).toMatch(/VISTAR_NETWORK_ID/i);
+  });
+
+  test('Live Vistar mode calls fetch implementation', async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => JSON.stringify({ advertisement: [] })
+    });
+
+    global.fetch = fetchMock;
+
+    const app = loadApp({
+      MOCK_VISTAR_API: 'false',
+      VISTAR_NETWORK_ID: 'net',
+      VISTAR_API_KEY: 'key',
+      TEST_DEVICE_ID: 'device-123',
+      TEST_VENUE_ID: 'venue-456'
+    });
+
+    const response = await request(app)
+      .get('/ad')
+      .query({ placementId: 'live-mode' })
+      .expect(200);
+
+    expect(response.body.source).toBe('vistar');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

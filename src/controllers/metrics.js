@@ -27,10 +27,24 @@ const proofOfPlayCounter = new client.Counter({
   registers: [register]
 });
 
+const vistarApiSuccessCounter = new client.Counter({
+  name: 'vistar_api_success_total',
+  help: 'Successful calls to Vistar API',
+  registers: [register]
+});
+
+const vistarApiFailureCounter = new client.Counter({
+  name: 'vistar_api_failure_total',
+  help: 'Failed calls to Vistar API',
+  registers: [register]
+});
+
 const recordAdRequest = () => adRequestCounter.inc();
 const recordCacheHit = () => cacheHitCounter.inc();
 const recordCacheMiss = () => cacheMissCounter.inc();
 const recordProofOfPlay = () => proofOfPlayCounter.inc();
+const recordVistarSuccess = () => vistarApiSuccessCounter.inc();
+const recordVistarFailure = () => vistarApiFailureCounter.inc();
 
 const getMetrics = async (req, res, next) => {
   try {
@@ -47,5 +61,7 @@ module.exports = {
   recordAdRequest,
   recordCacheHit,
   recordCacheMiss,
-  recordProofOfPlay
+  recordProofOfPlay,
+  recordVistarSuccess,
+  recordVistarFailure
 };

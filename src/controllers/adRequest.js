@@ -1,7 +1,13 @@
 const logger = require('../utils/logger');
 const cacheManager = require('../services/cacheManager');
 const vistarClient = require('../clients/vistarClient');
-const { recordAdRequest, recordCacheHit, recordCacheMiss } = require('./metrics');
+const {
+  recordAdRequest,
+  recordCacheHit,
+  recordCacheMiss,
+  recordVistarSuccess,
+  recordVistarFailure
+} = require('./metrics');
 
 const useMockPayload = () => process.env.MOCK_VISTAR_API !== 'false';
 
@@ -24,8 +30,15 @@ const stubCreativePayload = (placementId) => {
 };
 
 const handleAdRequest = async (req, res, next) => {
+  const mockMode = useMockPayload();
+
   try {
-    const { placementId = 'demo-placement' } = req.query;
+    const {
+      placementId = 'demo-placement',
+      deviceId,
+      venueId,
+      playerModel
+    } = req.query;
     const cached = cacheManager.getCachedAd(placementId);
 
     if (cached) {
@@ -38,15 +51,24 @@ const handleAdRequest = async (req, res, next) => {
       });
     }
 
-    const payloadSource = useMockPayload() ? 'stub' : 'vistar';
-    const payload = useMockPayload()
+    const payloadSource = mockMode ? 'stub' : 'vistar';
+    const payload = mockMode
       ? stubCreativePayload(placementId)
-      : await vistarClient.fetchAd(placementId);
+      : await vistarClient.fetchAd({
+          placementId,
+          deviceId,
+          venueId,
+          playerModel
+        });
 
     cacheManager.setCachedAd(placementId, payload, payload.ttlSeconds || 60);
 
     recordAdRequest();
     recordCacheMiss();
+
+    if (!mockMode) {
+      recordVistarSuccess();
+    }
 
     res.json({
       source: payloadSource,
@@ -57,6 +79,11 @@ const handleAdRequest = async (req, res, next) => {
     });
   } catch (error) {
     logger.error('Failed to handle ad request', { error: error.message });
+
+    if (!mockMode) {
+      recordVistarFailure();
+    }
+
     next(error);
   }
 };

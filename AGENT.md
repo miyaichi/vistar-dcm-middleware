@@ -314,6 +314,15 @@ NODE_ENV=development
 PORT=3000
 HOST=0.0.0.0
 VISTAR_ENVIRONMENT=staging
+DEFAULT_PLAYER_MODEL=ME-DEC
+DEFAULT_DISPLAY_WIDTH=1920
+DEFAULT_DISPLAY_HEIGHT=1080
+DEFAULT_DISPLAY_AREA_ID=main-display
+DEFAULT_DEVICE_ID=
+DEFAULT_VENUE_ID=
+TEST_DEVICE_ID=
+TEST_VENUE_ID=
+ALLOW_AUDIO=false
 ALLOWED_ORIGINS=*
 ENABLE_REQUEST_LOGGING=true
 ENABLE_METRICS=true
@@ -325,19 +334,15 @@ API_AUTH_TOKEN=
 MOCK_VISTAR_API=true
 VISTAR_API_URL=https://sandbox-api.vistarmedia.com
 VISTAR_TIMEOUT_MS=5000
+VISTAR_MAX_RETRIES=1
+VISTAR_RETRY_DELAY_MS=250
 
 # Populate these when MOCK_VISTAR_API=false
 VISTAR_NETWORK_ID=
 VISTAR_API_KEY=
 ```
 
-When you are ready to hit Vistar’s sandbox or production endpoints, set `MOCK_VISTAR_API=false`, provide `VISTAR_NETWORK_ID`/`VISTAR_API_KEY`, and (optionally) override `VISTAR_API_URL`. Future milestones will expand this list with player/device metadata once the live integration work begins.
-
-ENABLE_METRICS=true
-METRICS_PORT=9090
-
-# Prometheus push gateway (optional)
-# PROMETHEUS_PUSHGATEWAY_URL=http://localhost:9091
+When you are ready to hit Vistar’s sandbox or production endpoints, set `MOCK_VISTAR_API=false`, provide `VISTAR_NETWORK_ID`/`VISTAR_API_KEY`, and either supply `deviceId`/`venueId` query parameters or configure the defaults above. Future milestones will expand this list with player/device metadata once the live integration work begins.
 
 # ===========================
 # DCM Integration
