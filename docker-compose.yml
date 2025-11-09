@@ -1,0 +1,16 @@
+services:
+  middleware:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vistar-dcm-middleware
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      ENABLE_METRICS: ${ENABLE_METRICS:-true}
+      ENABLE_REQUEST_LOGGING: ${ENABLE_REQUEST_LOGGING:-true}
+      API_RATE_LIMIT: ${API_RATE_LIMIT:-100}
+    env_file:
+      - .env
+    restart: unless-stopped

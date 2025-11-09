@@ -92,6 +92,22 @@ docker-compose logs -f
 docker-compose down
 ```
 
+### Stubbed Middleware (Phase 1)
+
+The current build includes lightweight stub controllers so the service can run end-to-end (including inside Docker) before the full Vistar integration is wired up. The stubs log every call and return predictable JSON payloads that make it easy to verify wiring and monitoring.
+
+| Endpoint | Purpose | Example |
+|----------|---------|---------|
+| `GET /health` | Basic liveness probe with uptime/hostname | `curl http://localhost:3000/health` |
+| `GET /ad?placementId=demo` | Returns a cached HTML5 placeholder creative; primed on first request | `curl "http://localhost:3000/ad?placementId=demo-screen"` |
+| `GET /pop` | Acknowledges PoP callbacks and echoes metadata | `curl http://localhost:3000/pop?eventId=test` |
+| `GET /metrics` | Prometheus metrics (enable via `ENABLE_METRICS=true`) | `curl http://localhost:3000/metrics` |
+| `GET /cache/status` | Inspect in-memory cache stats | `curl http://localhost:3000/cache/status` |
+
+> **Tip:** Copy `.env.example` to `.env` (or export environment variables) before running `docker-compose up -d` so that rate limits, logging, and metrics flags are configured the way you expect.
+
+> Docker Compose automatically reads the `.env` file that sits next to `docker-compose.yml`, so the container now boots with the same values you use for local `npm start`.
+
 ## Configuration
 
 ### Environment Variables

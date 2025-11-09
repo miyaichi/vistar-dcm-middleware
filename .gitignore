@@ -84,7 +84,6 @@ creatives/
 
 # Docker
 docker-compose.override.yml
-.dockerignore
 
 # PM2
 .pm2/
