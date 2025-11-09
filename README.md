@@ -138,6 +138,21 @@ With metrics enabled you also get counters for:
 
 Use them to validate caching behavior and PoP traffic before wiring the live Vistar API calls.
 
+#### Switching between stub and live Vistar calls
+
+The middleware now ships with a Vistar API client scaffold. By default it runs in mock mode so you still get deterministic responses:
+
+```
+MOCK_VISTAR_API=true   # default; uses local stub creative
+MOCK_VISTAR_API=false  # calls the configured Vistar endpoint
+VISTAR_API_URL=https://sandbox-api.vistarmedia.com
+VISTAR_NETWORK_ID=your_network
+VISTAR_API_KEY=your_api_key
+VISTAR_TIMEOUT_MS=5000
+```
+
+Turn off `MOCK_VISTAR_API` and populate the credentials once you are ready to talk to Vistar’s sandbox or production API. Errors bubble back through the standard Express error handler so you can observe failures easily.
+
 ## Configuration
 
 ### Environment Variables

@@ -1,6 +1,9 @@
 const logger = require('../utils/logger');
 const cacheManager = require('../services/cacheManager');
+const vistarClient = require('../clients/vistarClient');
 const { recordAdRequest, recordCacheHit, recordCacheMiss } = require('./metrics');
+
+const useMockPayload = () => process.env.MOCK_VISTAR_API !== 'false';
 
 const stubCreativePayload = (placementId) => {
   const ttlSeconds = parseInt(process.env.CACHE_TTL_SECONDS, 10) || 60;
@@ -35,16 +38,22 @@ const handleAdRequest = async (req, res, next) => {
       });
     }
 
-    const payload = stubCreativePayload(placementId);
-    cacheManager.setCachedAd(placementId, payload, payload.ttlSeconds);
+    const payloadSource = useMockPayload() ? 'stub' : 'vistar';
+    const payload = useMockPayload()
+      ? stubCreativePayload(placementId)
+      : await vistarClient.fetchAd(placementId);
+
+    cacheManager.setCachedAd(placementId, payload, payload.ttlSeconds || 60);
 
     recordAdRequest();
     recordCacheMiss();
 
     res.json({
-      source: 'stub',
+      source: payloadSource,
       payload,
-      message: 'Stub response. Integrate with Vistar Media API to fetch live creatives.'
+      message: payloadSource === 'stub'
+        ? 'Stub response. Integrate with Vistar Media API to fetch live creatives.'
+        : 'Vistar API response'
     });
   } catch (error) {
     logger.error('Failed to handle ad request', { error: error.message });

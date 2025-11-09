@@ -164,4 +164,16 @@ describe('Vistar DCM Middleware (stub)', () => {
       .query({ placementId: 'auth-screen' })
       .expect(200);
   });
+
+  test('Vistar client mock mode returns stub payload by default', async () => {
+    const app = loadApp({ MOCK_VISTAR_API: 'true' });
+
+    const response = await request(app)
+      .get('/ad')
+      .query({ placementId: 'mock-mode' })
+      .expect(200);
+
+    expect(response.body.source).toBe('stub');
+    expect(response.body.message).toMatch(/Stub response/);
+  });
 });
