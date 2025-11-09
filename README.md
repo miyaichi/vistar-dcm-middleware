@@ -79,6 +79,14 @@ npm run dev
 npm start
 ```
 
+### Testing
+
+```bash
+npm test
+```
+
+The Jest + Supertest suite exercises health, ad, PoP, cache, and auth flows so future Vistar integrations can move quickly with confidence.
+
 ### Docker Deployment
 
 ```bash
