@@ -9,6 +9,7 @@ const adRequestController = require('./controllers/adRequest');
 const proofOfPlayController = require('./controllers/proofOfPlay');
 const healthController = require('./controllers/health');
 const metricsController = require('./controllers/metrics');
+const cacheController = require('./controllers/cache');
 const apiAuth = require('./middleware/apiAuth');
 const { validateAdRequest, validateProofOfPlay } = require('./middleware/validators');
 
@@ -82,11 +83,10 @@ app.get('/ad', validateAdRequest, adRequestController.handleAdRequest);
 // Proof of Play callback endpoint
 app.get('/pop', validateProofOfPlay, proofOfPlayController.handleProofOfPlay);
 
-// Cache status endpoint
-app.get('/cache/status', (req, res) => {
-  const cacheManager = require('./services/cacheManager');
-  res.json(cacheManager.getStatus());
-});
+// Cache management endpoints
+app.get('/cache/status', cacheController.status);
+app.post('/cache/invalidate', cacheController.invalidateEntry);
+app.post('/cache/clear', cacheController.clearAll);
 
 // 404 handler
 app.use((req, res) => {

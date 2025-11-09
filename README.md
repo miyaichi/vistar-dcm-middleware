@@ -111,6 +111,8 @@ The current build includes lightweight stub controllers so the service can run e
 | `GET /pop` | Acknowledges PoP callbacks and echoes metadata (requires `eventId`) | `curl http://localhost:3000/pop?eventId=test` |
 | `GET /metrics` | Prometheus metrics (enable via `ENABLE_METRICS=true`) | `curl http://localhost:3000/metrics` |
 | `GET /cache/status` | Inspect in-memory cache stats | `curl http://localhost:3000/cache/status` |
+| `POST /cache/invalidate` | Remove one cached placement by sending `{"placementId":"demo"}` | `curl -XPOST -H "Content-Type: application/json" -d '{"placementId":"demo"}' http://localhost:3000/cache/invalidate` |
+| `POST /cache/clear` | Flush the entire cache when you need a blank slate | `curl -XPOST http://localhost:3000/cache/clear` |
 
 > **Tip:** Copy `.env.example` to `.env` (or export environment variables) before running `docker-compose up -d` so that rate limits, logging, and metrics flags are configured the way you expect.
 

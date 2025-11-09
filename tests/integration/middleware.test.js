@@ -74,8 +74,61 @@ describe('Vistar DCM Middleware (stub)', () => {
     expect(response.body).toMatchObject({
       hits: expect.any(Number),
       misses: expect.any(Number),
-      defaultTtl: expect.any(Number)
+      defaultTtl: expect.any(Number),
+      maxEntries: expect.any(Number)
     });
+  });
+
+  test('POST /cache/invalidate removes cached placement', async () => {
+    const app = loadApp();
+
+    await request(app)
+      .post('/cache/invalidate')
+      .send({})
+      .expect(400);
+
+    await request(app)
+      .get('/ad')
+      .query({ placementId: 'invalidate-me' })
+      .expect(200);
+
+    const invalidateResponse = await request(app)
+      .post('/cache/invalidate')
+      .send({ placementId: 'invalidate-me' })
+      .expect(200);
+
+    expect(invalidateResponse.body).toMatchObject({
+      placementId: 'invalidate-me',
+      removed: true
+    });
+
+    const after = await request(app)
+      .get('/ad')
+      .query({ placementId: 'invalidate-me' })
+      .expect(200);
+
+    expect(after.body.source).toBe('stub');
+  });
+
+  test('POST /cache/clear flushes all cache entries', async () => {
+    const app = loadApp();
+
+    await request(app)
+      .get('/ad')
+      .query({ placementId: 'clear-me' })
+      .expect(200);
+
+    const clearResponse = await request(app)
+      .post('/cache/clear')
+      .expect(200);
+
+    expect(clearResponse.body).toHaveProperty('cleared', true);
+
+    const status = await request(app)
+      .get('/cache/status')
+      .expect(200);
+
+    expect(status.body.keys).not.toContain('ad:clear-me');
   });
 
   test('GET /pop requires eventId and echoes payload when provided', async () => {
