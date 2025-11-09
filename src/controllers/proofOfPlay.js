@@ -1,9 +1,8 @@
-const { randomUUID } = require('crypto');
 const logger = require('../utils/logger');
 
 const handleProofOfPlay = (req, res, next) => {
   try {
-    const eventId = req.query.eventId || randomUUID();
+    const { eventId } = req.query;
 
     logger.info('Received proof-of-play callback (stub)', {
       eventId,

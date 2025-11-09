@@ -100,13 +100,25 @@ The current build includes lightweight stub controllers so the service can run e
 |----------|---------|---------|
 | `GET /health` | Basic liveness probe with uptime/hostname | `curl http://localhost:3000/health` |
 | `GET /ad?placementId=demo` | Returns a cached HTML5 placeholder creative; primed on first request | `curl "http://localhost:3000/ad?placementId=demo-screen"` |
-| `GET /pop` | Acknowledges PoP callbacks and echoes metadata | `curl http://localhost:3000/pop?eventId=test` |
+| `GET /pop` | Acknowledges PoP callbacks and echoes metadata (requires `eventId`) | `curl http://localhost:3000/pop?eventId=test` |
 | `GET /metrics` | Prometheus metrics (enable via `ENABLE_METRICS=true`) | `curl http://localhost:3000/metrics` |
 | `GET /cache/status` | Inspect in-memory cache stats | `curl http://localhost:3000/cache/status` |
 
 > **Tip:** Copy `.env.example` to `.env` (or export environment variables) before running `docker-compose up -d` so that rate limits, logging, and metrics flags are configured the way you expect.
 
 > Docker Compose automatically reads the `.env` file that sits next to `docker-compose.yml`, so the container now boots with the same values you use for local `npm start`.
+
+#### Locking down the stub server
+
+Set `API_AUTH_TOKEN` in `.env` to force every request to supply the same token via either the `X-API-Token` header or an `Authorization: Bearer <token>` header. Example:
+
+```bash
+echo "API_AUTH_TOKEN=change-me" >> .env
+docker compose up -d --build
+curl -H "X-API-Token: change-me" "http://localhost:3000/ad?placementId=demo-screen"
+```
+
+Requests without the token are rejected with `401 Unauthorized`, letting you integrate upstream systems safely even before the Vistar API calls are implemented.
 
 ## Configuration
 

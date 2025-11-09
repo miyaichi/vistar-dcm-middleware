@@ -9,6 +9,8 @@ const adRequestController = require('./controllers/adRequest');
 const proofOfPlayController = require('./controllers/proofOfPlay');
 const healthController = require('./controllers/health');
 const metricsController = require('./controllers/metrics');
+const apiAuth = require('./middleware/apiAuth');
+const { validateAdRequest, validateProofOfPlay } = require('./middleware/validators');
 
 const app = express();
 
@@ -63,6 +65,9 @@ if (process.env.ENABLE_REQUEST_LOGGING === 'true') {
   });
 }
 
+// API authentication (only enforced when API_AUTH_TOKEN is set)
+app.use(apiAuth);
+
 // Health check endpoint
 app.get('/health', healthController.check);
 
@@ -72,10 +77,10 @@ if (process.env.ENABLE_METRICS === 'true') {
 }
 
 // Main ad request endpoint
-app.get('/ad', adRequestController.handleAdRequest);
+app.get('/ad', validateAdRequest, adRequestController.handleAdRequest);
 
 // Proof of Play callback endpoint
-app.get('/pop', proofOfPlayController.handleProofOfPlay);
+app.get('/pop', validateProofOfPlay, proofOfPlayController.handleProofOfPlay);
 
 // Cache status endpoint
 app.get('/cache/status', (req, res) => {
