@@ -140,7 +140,7 @@ Use them to validate caching behavior and PoP traffic before wiring the live Vis
 
 #### Switching between stub and live Vistar calls
 
-The middleware now ships with a Vistar API client scaffold. By default it runs in mock mode so you still get deterministic responses:
+The middleware now ships with a Vistar API client scaffold. By default it runs in mock mode so you still get deterministic responses. When you are ready to integrate with Vistar’s sandbox/production endpoint, flip the toggle and provide credentials:
 
 ```
 MOCK_VISTAR_API=true   # default; uses local stub creative
@@ -151,7 +151,7 @@ VISTAR_API_KEY=your_api_key
 VISTAR_TIMEOUT_MS=5000
 ```
 
-Turn off `MOCK_VISTAR_API` and populate the credentials once you are ready to talk to Vistar’s sandbox or production API. Errors bubble back through the standard Express error handler so you can observe failures easily.
+When `MOCK_VISTAR_API=false`, the middleware routes ad requests through `src/clients/vistarClient.js`, caches the response, and surfaces failures via the standard Express error handler and Prometheus counters. This is the entry point for the upcoming real Vistar Media integration work.
 
 ## Configuration
 

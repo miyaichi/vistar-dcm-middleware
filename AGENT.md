@@ -38,8 +38,14 @@ cp .env.example .env
 # VISTAR_NETWORK_ID=your_network_id
 # VISTAR_API_KEY=your_api_key
 
-# Start development server
+# Start development server (auto reload)
 npm run dev
+
+# Run integration tests
+npm test -- --runTestsByPath tests/integration/middleware.test.js
+
+# Or exercise everything inside Docker
+docker compose up -d --build
 ```
 
 ### Project Structure
@@ -47,29 +53,25 @@ npm run dev
 ```
 vistar-dcm-middleware/
 ├── src/
-│   ├── index.js              # Entry point
-│   ├── server.js             # Express server setup
-│   ├── config/
-│   │   ├── vistar.js         # Vistar API configuration
-│   │   ├── players.js        # Player-specific configs
-│   │   └── cache.js          # Cache configuration
+│   ├── index.js                 # Process bootstrap & graceful shutdown
+│   ├── server.js                # Express app wiring
+│   ├── clients/
+│   │   └── vistarClient.js      # Vistar API client (mock/live toggle)
 │   ├── controllers/
-│   │   ├── adController.js   # Ad request handler
-│   │   └── popController.js  # PoP handler
-│   ├── services/
-│   │   ├── vistarService.js  # Vistar API client
-│   │   ├── cacheService.js   # Creative cache manager
-│   │   └── htmlGenerator.js  # HTML5 player generator
+│   │   ├── adRequest.js         # Ad endpoint (stub or Vistar)
+│   │   ├── cache.js             # Cache status/invalidation
+│   │   ├── health.js            # /health endpoint
+│   │   ├── metrics.js           # Prometheus collectors
+│   │   └── proofOfPlay.js       # PoP acknowledgement
 │   ├── middleware/
-│   │   ├── errorHandler.js   # Error handling
-│   │   └── logger.js         # Request logging
+│   │   ├── apiAuth.js           # Optional token auth
+│   │   └── validators.js        # Request validation helpers
+│   ├── services/
+│   │   └── cacheManager.js      # In-memory cache w/ eviction helpers
 │   └── utils/
-│       ├── metrics.js        # Prometheus metrics
-│       └── validator.js      # Request validation
+│       └── logger.js            # Winston logger
 ├── tests/
-│   ├── unit/                 # Unit tests
-│   ├── integration/          # Integration tests
-│   └── e2e/                  # End-to-end tests
+│   └── integration/             # Supertest coverage of Express app
 └── docs/
     ├── ARCHITECTURE_DIAGRAMS.md
     ├── INTEGRATION_APPROACH.md
@@ -302,60 +304,34 @@ window.addEventListener('load', function() {
 
 ### Environment Variables
 
-Create `.env` file in project root:
+Create `.env` in the project root. During the stub phase these are the only values the app reads; they also act as defaults for Docker Compose:
 
 ```bash
 # ===========================
-# Vistar API Configuration
+# Quick Start (Stub Mode)
 # ===========================
-
-# Staging credentials
-VISTAR_NETWORK_ID=your_staging_network_id
-VISTAR_API_KEY=your_staging_api_key
-VISTAR_API_URL=https://sandbox-api.vistarmedia.com
-VISTAR_ENVIRONMENT=staging
-
-# Production credentials (comment out for staging)
-# VISTAR_NETWORK_ID=your_production_network_id
-# VISTAR_API_KEY=your_production_api_key
-# VISTAR_API_URL=https://api.vistarmedia.com
-# VISTAR_ENVIRONMENT=production
-
-# ===========================
-# Server Configuration
-# ===========================
-
-PORT=3000
 NODE_ENV=development
+PORT=3000
 HOST=0.0.0.0
-
-# ===========================
-# Creative Caching
-# ===========================
-
-# Cache directory (must be writable)
-CACHE_DIR=/var/cache/vistar/creatives
-
-# Update interval in milliseconds (3600000 = 1 hour)
-CACHE_UPDATE_INTERVAL=3600000
-
-# Maximum cache size
-CACHE_MAX_SIZE=10GB
-
-# Cache cleanup interval (86400000 = 24 hours)
-CACHE_CLEANUP_INTERVAL=86400000
-
-# ===========================
-# Logging
-# ===========================
-
+VISTAR_ENVIRONMENT=staging
+ALLOWED_ORIGINS=*
+ENABLE_REQUEST_LOGGING=true
+ENABLE_METRICS=true
+API_RATE_LIMIT=100
+CACHE_TTL_SECONDS=60
+CACHE_MAX_ENTRIES=100
 LOG_LEVEL=info
-LOG_FORMAT=json
-LOG_FILE=logs/vistar-middleware.log
+API_AUTH_TOKEN=
+MOCK_VISTAR_API=true
+VISTAR_API_URL=https://sandbox-api.vistarmedia.com
+VISTAR_TIMEOUT_MS=5000
 
-# ===========================
-# Monitoring
-# ===========================
+# Populate these when MOCK_VISTAR_API=false
+VISTAR_NETWORK_ID=
+VISTAR_API_KEY=
+```
+
+When you are ready to hit Vistar’s sandbox or production endpoints, set `MOCK_VISTAR_API=false`, provide `VISTAR_NETWORK_ID`/`VISTAR_API_KEY`, and (optionally) override `VISTAR_API_URL`. Future milestones will expand this list with player/device metadata once the live integration work begins.
 
 ENABLE_METRICS=true
 METRICS_PORT=9090
