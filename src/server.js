@@ -11,9 +11,22 @@ const healthController = require('./controllers/health');
 const metricsController = require('./controllers/metrics');
 const cacheController = require('./controllers/cache');
 const apiAuth = require('./middleware/apiAuth');
+const creativeCacheService = require('./services/creativeCacheService');
 const { validateAdRequest, validateProofOfPlay } = require('./middleware/validators');
 
 const app = express();
+
+creativeCacheService.start().catch((error) => {
+  logger.warn('Failed to start creative cache service', { error: error.message });
+});
+
+app.use(
+  '/cached-assets',
+  express.static(creativeCacheService.getCacheDir(), {
+    fallthrough: true,
+    maxAge: '1h'
+  })
+);
 
 // Security middleware
 app.use(helmet({

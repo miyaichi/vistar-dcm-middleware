@@ -50,15 +50,9 @@ const getSupportedMedia = (model) => {
 
 const sanitizeBaseUrl = (url) => (url || 'https://sandbox-api.vistarmedia.com').replace(/\/+$/, '');
 
-const buildHeaders = (apiKey) => ({
+const buildHeaders = () => ({
   'Content-Type': 'application/json',
-  'User-Agent': `vistar-dcm-middleware/${process.env.npm_package_version || 'dev'}`,
-  ...(apiKey
-    ? {
-        Authorization: `Bearer ${apiKey}`,
-        'x-api-key': apiKey
-      }
-    : {})
+  'User-Agent': `vistar-dcm-middleware/${process.env.npm_package_version || 'dev'}`
 });
 
 const resolveString = (value, fallback) => {
@@ -85,7 +79,8 @@ const buildRequestPayload = ({ placementId, deviceId, venueId, playerModel }) =>
     resolveString(deviceId) ||
     resolveString(process.env.TEST_DEVICE_ID) ||
     resolveString(process.env.DEFAULT_DEVICE_ID) ||
-    resolveString(placementId);
+    resolveString(placementId) ||
+    'VistarDisplay0';
 
   if (!resolvedDeviceId) {
     throw new VistarConfigurationError('deviceId is required (pass ?deviceId= or set TEST_DEVICE_ID / DEFAULT_DEVICE_ID)');
@@ -103,17 +98,17 @@ const buildRequestPayload = ({ placementId, deviceId, venueId, playerModel }) =>
   const width = parseInteger(process.env.DEFAULT_DISPLAY_WIDTH, 1920);
   const height = parseInteger(process.env.DEFAULT_DISPLAY_HEIGHT, 1080);
   const allowAudio = process.env.ALLOW_AUDIO === 'true';
-  const displayAreaId = resolveString(process.env.DEFAULT_DISPLAY_AREA_ID, 'main-display');
+  const displayAreaId = resolveString(process.env.DEFAULT_DISPLAY_AREA_ID, 'display-0');
   const playerModelToUse = resolveString(playerModel, process.env.DEFAULT_PLAYER_MODEL) || 'ME-DEC';
 
   return {
     request: {
       network_id: networkId,
       api_key: apiKey,
-      placement_id: placementId,
       device_id: resolvedDeviceId,
       venue_id: resolvedVenueId,
       display_time: Math.floor(Date.now() / 1000),
+      direct_connection: process.env.VISTAR_DIRECT_CONNECTION === 'true',
       display_area: [
         {
           id: displayAreaId,
@@ -152,13 +147,13 @@ const normalizeError = (error) => {
   return genericError;
 };
 
-const performRequest = async (requestBody) => {
+const performRequest = async (requestBody, path = '/api/v1/get_ad/json') => {
   const timeoutMs = parseInteger(process.env.VISTAR_TIMEOUT_MS, 5000);
   const retries = Math.max(parseInteger(process.env.VISTAR_MAX_RETRIES, 1), 1);
   const retryDelay = Math.max(parseInteger(process.env.VISTAR_RETRY_DELAY_MS, 250), 0);
 
   const baseUrl = sanitizeBaseUrl(process.env.VISTAR_API_URL);
-  const endpoint = `${baseUrl}/api/v1/get_ad/json`;
+  const endpoint = `${baseUrl}${path}`;
 
   let attempt = 0;
   let lastError;
@@ -171,7 +166,7 @@ const performRequest = async (requestBody) => {
     try {
       const response = await fetchFn(endpoint, {
         method: 'POST',
-        headers: buildHeaders(requestBody.api_key),
+        headers: buildHeaders(),
         body: JSON.stringify(requestBody),
         signal: controller.signal
       });
@@ -190,7 +185,6 @@ const performRequest = async (requestBody) => {
         error.retryable = response.status >= 500;
         throw error;
       }
-
       return payload;
     } catch (error) {
       lastError = normalizeError(error);
@@ -249,8 +243,35 @@ const fetchAd = async ({ placementId, deviceId, venueId, playerModel }) => {
   return performRequest(request);
 };
 
+const fetchCreativeAssets = async ({ placementId, deviceId, venueId, playerModel }) => {
+  const mockMode = process.env.MOCK_VISTAR_API !== 'false';
+
+  if (mockMode) {
+    logger.debug('Creative caching skipped in mock mode', { placementId });
+    return null;
+  }
+
+  const { request, context } = buildRequestPayload({
+    placementId,
+    deviceId,
+    venueId,
+    playerModel
+  });
+
+  logger.info('Fetching creatives for cache', {
+    placementId,
+    deviceId: context.deviceId,
+    venueId: context.venueId,
+    playerModel: context.playerModel,
+    endpoint: sanitizeBaseUrl(process.env.VISTAR_API_URL)
+  });
+
+  return performRequest(request, '/api/v1/get_asset/json');
+};
+
 module.exports = {
   fetchAd,
+  fetchCreativeAssets,
   VistarConfigurationError,
   VistarApiError
 };

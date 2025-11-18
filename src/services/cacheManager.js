@@ -38,7 +38,7 @@ const enforceMaxEntries = () => {
 const setCachedAd = (placementId, payload, ttl = DEFAULT_TTL) => {
   cache.set(adCacheKey(placementId), payload, ttl);
   enforceMaxEntries();
-  logger.debug('Cached stub ad payload', { placementId, ttl });
+  logger.debug('Cached ad payload', { placementId, ttl });
   return payload;
 };
 

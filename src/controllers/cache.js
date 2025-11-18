@@ -1,4 +1,5 @@
 const cacheManager = require('../services/cacheManager');
+const creativeCacheService = require('../services/creativeCacheService');
 
 const ensurePlacementId = (value) => {
   if (!value || typeof value !== 'string' || !value.trim()) {
@@ -13,7 +14,10 @@ const ensurePlacementId = (value) => {
 };
 
 const status = (req, res) => {
-  res.json(cacheManager.getStatus());
+  res.json({
+    ...cacheManager.getStatus(),
+    creativeCache: creativeCacheService.getStatus()
+  });
 };
 
 const invalidateEntry = (req, res) => {

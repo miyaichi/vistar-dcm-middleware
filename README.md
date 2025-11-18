@@ -115,6 +115,8 @@ The current build includes lightweight stub controllers so the service can run e
 | `POST /cache/clear` | Flush the entire cache when you need a blank slate | `curl -XPOST http://localhost:3000/cache/clear` |
 
 `/ad` also accepts optional overrides: `deviceId`, `venueId`, and `playerModel` (ME-DEC, USDP-R5000, USDP-R2200, USDP-R1000, USDP-R500). These feed directly into the Vistar API payload once live mode is enabled.
+
+By default `/ad` returns an HTML5 page suitable for MEDIAEDGE URI slots. Append `&format=json` if you need to inspect the raw payload (e.g., `curl "http://localhost:3000/ad?placementId=demo&format=json"`). Cached creatives are served under `/cached-assets/...`, so the HTML player can load them locally when available.
 > **Tip:** Copy `.env.example` to `.env` (or export environment variables) before running `docker-compose up -d` so that rate limits, logging, and metrics flags are configured the way you expect.
 
 > Docker Compose automatically reads the `.env` file that sits next to `docker-compose.yml`, so the container now boots with the same values you use for local `npm start`.
@@ -183,6 +185,16 @@ HOST=0.0.0.0
 CACHE_DIR=/var/cache/vistar/creatives
 CACHE_UPDATE_INTERVAL=3600000
 CACHE_MAX_SIZE=10GB
+CACHE_CLEANUP_INTERVAL=86400000
+CACHE_ENABLED=true
+# Format: placementId:venueId:deviceId:playerModel (comma separated)
+CACHE_WARMUP_TARGETS=display-0:venue-123:device-123:ME-DEC
+
+`CACHE_WARMUP_TARGETS` lets the middleware prefetch creatives even before `/ad` is called. 
+Each entry uses the format `placementId:venueId:deviceId:playerModel` and entries are
+comma-separated. Use `off` (or `disabled`/`none`) to turn off warm-up. When this value is omitted
+the cache falls back to the default venue/device (`DEFAULT_VENUE_ID`, `DEFAULT_DEVICE_ID`) so the
+canonical `VistarDisplay0` + `display-0` combination still warms automatically.
 
 # Logging
 LOG_LEVEL=info
@@ -491,18 +503,19 @@ For detailed development timeline, see [docs/INTEGRATION_APPROACH.md](docs/INTEG
 - [x] Jest + Supertest integration coverage
 - **Milestone:** Middleware runs end-to-end locally & in Docker without Vistar access
 
-### Phase 2: Vistar Media API Integration (Weeks 3-4) - **Current**
-- [ ] Implement live Ad Request API call path in `vistarClient`
-- [ ] Surface Vistar success/failure metrics & retries
-- [ ] Validate required credentials/config when `MOCK_VISTAR_API=false`
-- [ ] Begin HTML payload shaping for MEDIAEDGE players
-- **Milestone:** First live Vistar response cached and returned to DCM
+### Phase 2: Creative Caching & HTML Delivery (Weeks 3-4) - ✅ Completed
+- [x] Implement live Ad Request API call path in `vistarClient`
+- [x] Surface Vistar success/failure metrics & retries
+- [x] Enforce credential validation when `MOCK_VISTAR_API=false`
+- [x] Download/cache creatives, expose `/cached-assets` static serving
+- [x] Return HTML5 player responses (video/img + PoP) with `format=json` escape hatch
+- **Milestone:** First live Vistar response cached, rendered, and replayed to DCM
 
-### Phase 3: Creative Caching Enhancements (Week 5)
-- [ ] Creative Caching API integration + persistence
-- [ ] Background refresh workers & cache warmup tooling
-- [ ] Cache hit/miss dashboards and alerting thresholds
-- **Milestone:** Ads display even during extended network interruptions
+### Phase 3: Creative Caching Enhancements (Week 5) - **Upcoming**
+- [ ] Cache warmup tooling & scheduling controls
+- [ ] Advanced monitoring (hit/miss dashboards, alert thresholds)
+- [ ] Configurable playback options (e.g., loop toggle) & HTML customization
+- **Milestone:** Ads display even during extended network interruptions with richer observability
 
 ### Phase 4: Multi-Player Support (Week 6)
 - [ ] Player detection logic

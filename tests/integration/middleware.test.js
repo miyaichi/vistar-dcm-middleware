@@ -10,6 +10,7 @@ const loadApp = (envOverrides = {}) => {
     NODE_ENV: 'test',
     PORT: 0,
     HOST: '127.0.0.1',
+    MOCK_VISTAR_API: 'true',
     ...envOverrides
   };
 
@@ -52,7 +53,7 @@ describe('Vistar DCM Middleware (stub)', () => {
 
     const first = await request(app)
       .get('/ad')
-      .query({ placementId: 'integration-screen' })
+      .query({ placementId: 'integration-screen', format: 'json' })
       .expect(200);
 
     expect(first.body.source).toBe('stub');
@@ -60,7 +61,7 @@ describe('Vistar DCM Middleware (stub)', () => {
 
     const second = await request(app)
       .get('/ad')
-      .query({ placementId: 'integration-screen' })
+      .query({ placementId: 'integration-screen', format: 'json' })
       .expect(200);
 
     expect(second.body.source).toBe('cache');
@@ -78,7 +79,12 @@ describe('Vistar DCM Middleware (stub)', () => {
       hits: expect.any(Number),
       misses: expect.any(Number),
       defaultTtl: expect.any(Number),
-      maxEntries: expect.any(Number)
+      maxEntries: expect.any(Number),
+      creativeCache: expect.objectContaining({
+        enabled: expect.any(Boolean),
+        files: expect.any(Number),
+        totalBytes: expect.any(Number)
+      })
     });
   });
 
@@ -92,7 +98,7 @@ describe('Vistar DCM Middleware (stub)', () => {
 
     await request(app)
       .get('/ad')
-      .query({ placementId: 'invalidate-me' })
+      .query({ placementId: 'invalidate-me', format: 'json' })
       .expect(200);
 
     const invalidateResponse = await request(app)
@@ -107,7 +113,7 @@ describe('Vistar DCM Middleware (stub)', () => {
 
     const after = await request(app)
       .get('/ad')
-      .query({ placementId: 'invalidate-me' })
+      .query({ placementId: 'invalidate-me', format: 'json' })
       .expect(200);
 
     expect(after.body.source).toBe('stub');
@@ -118,7 +124,7 @@ describe('Vistar DCM Middleware (stub)', () => {
 
     await request(app)
       .get('/ad')
-      .query({ placementId: 'clear-me' })
+      .query({ placementId: 'clear-me', format: 'json' })
       .expect(200);
 
     const clearResponse = await request(app)
@@ -158,13 +164,13 @@ describe('Vistar DCM Middleware (stub)', () => {
 
     await request(app)
       .get('/ad')
-      .query({ placementId: 'auth-screen' })
+      .query({ placementId: 'auth-screen', format: 'json' })
       .expect(401);
 
     await request(app)
       .get('/ad')
       .set('X-API-Token', token)
-      .query({ placementId: 'auth-screen' })
+      .query({ placementId: 'auth-screen', format: 'json' })
       .expect(200);
   });
 
@@ -173,7 +179,7 @@ describe('Vistar DCM Middleware (stub)', () => {
 
     const response = await request(app)
       .get('/ad')
-      .query({ placementId: 'mock-mode' })
+      .query({ placementId: 'mock-mode', format: 'json' })
       .expect(200);
 
     expect(response.body.source).toBe('stub');
@@ -189,7 +195,7 @@ describe('Vistar DCM Middleware (stub)', () => {
 
     const response = await request(app)
       .get('/ad')
-      .query({ placementId: 'live-config-error' })
+      .query({ placementId: 'live-config-error', format: 'json' })
       .expect(500);
 
     expect(response.body.message).toMatch(/VISTAR_NETWORK_ID/i);
@@ -214,10 +220,22 @@ describe('Vistar DCM Middleware (stub)', () => {
 
     const response = await request(app)
       .get('/ad')
-      .query({ placementId: 'live-mode' })
+      .query({ placementId: 'live-mode', format: 'json' })
       .expect(200);
 
     expect(response.body.source).toBe('vistar');
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  test('GET /ad returns HTML when no format is specified', async () => {
+    const app = loadApp();
+
+    const response = await request(app)
+      .get('/ad')
+      .query({ placementId: 'html-mode' })
+      .expect(200);
+
+    expect(response.headers['content-type']).toMatch(/text\/html/);
+    expect(response.text).toContain('<!DOCTYPE html>');
   });
 });
