@@ -198,6 +198,8 @@ CACHE_UPDATE_INTERVAL=3600000
 CACHE_MAX_SIZE=10GB
 CACHE_CLEANUP_INTERVAL=86400000
 CACHE_ENABLED=true
+# Video playback behavior
+VIDEO_LOOP=false
 # Format: placementId:venueId:deviceId:playerModel (comma separated)
 CACHE_WARMUP_TARGETS=display-0:venue-123:device-123:ME-DEC
 

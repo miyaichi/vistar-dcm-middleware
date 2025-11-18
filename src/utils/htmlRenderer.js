@@ -42,6 +42,7 @@ const buildMediaElement = ({ ad, assetUrl }) => {
 
   const mimeType = (ad.mime_type || '').toLowerCase();
   const altText = escapeHtml(ad.advertiser || ad.creative_id || 'Creative');
+  const loopVideos = process.env.VIDEO_LOOP === 'true';
 
   if (mimeType.startsWith('video/')) {
     return `<video id="creative"
@@ -49,8 +50,8 @@ const buildMediaElement = ({ ad, assetUrl }) => {
       autoplay
       muted
       playsinline
-      loop
       preload="auto"
+      ${loopVideos ? 'loop' : ''}
       controls
       poster="${escapeHtml(ad.poster_url || '')}">
     </video>`;
