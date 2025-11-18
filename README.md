@@ -117,6 +117,17 @@ The current build includes lightweight stub controllers so the service can run e
 `/ad` also accepts optional overrides: `deviceId`, `venueId`, and `playerModel` (ME-DEC, USDP-R5000, USDP-R2200, USDP-R1000, USDP-R500). These feed directly into the Vistar API payload once live mode is enabled.
 
 By default `/ad` returns an HTML5 page suitable for MEDIAEDGE URI slots. Append `&format=json` if you need to inspect the raw payload (e.g., `curl "http://localhost:3000/ad?placementId=demo&format=json"`). Cached creatives are served under `/cached-assets/...`, so the HTML player can load them locally when available.
+
+### Creative Cache Tooling
+
+- Warm a target manually (format `placement:venue:device:player`):  
+  `npm run cache:warmup -- vistar-demo:hwt_cms_dev:VistarDisplay0:USDP-R5000`
+- Clear the on-disk creative cache and reset the index:  
+  `npm run cache:clear`
+
+If no arguments are provided, `cache:warmup` uses the `CACHE_WARMUP_TARGETS` env var (or the default
+device/venue). Use `./get_asset.sh` to inspect the exact payload that the warmup scripts send to
+`/api/v1/get_asset/json`.
 > **Tip:** Copy `.env.example` to `.env` (or export environment variables) before running `docker-compose up -d` so that rate limits, logging, and metrics flags are configured the way you expect.
 
 > Docker Compose automatically reads the `.env` file that sits next to `docker-compose.yml`, so the container now boots with the same values you use for local `npm start`.
@@ -195,6 +206,9 @@ Each entry uses the format `placementId:venueId:deviceId:playerModel` and entrie
 comma-separated. Use `off` (or `disabled`/`none`) to turn off warm-up. When this value is omitted
 the cache falls back to the default venue/device (`DEFAULT_VENUE_ID`, `DEFAULT_DEVICE_ID`) so the
 canonical `VistarDisplay0` + `display-0` combination still warms automatically.
+
+> Verify your get_asset payload with `./get_asset.sh` (same format as described in
+> [Vistar’s Creative Caching endpoint](https://help.vistarmedia.com/hc/en-us/articles/224987348-Creative-caching-endpoint)).
 
 # Logging
 LOG_LEVEL=info
@@ -511,8 +525,9 @@ For detailed development timeline, see [docs/INTEGRATION_APPROACH.md](docs/INTEG
 - [x] Return HTML5 player responses (video/img + PoP) with `format=json` escape hatch
 - **Milestone:** First live Vistar response cached, rendered, and replayed to DCM
 
-### Phase 3: Creative Caching Enhancements (Week 5) - **Upcoming**
-- [ ] Cache warmup tooling & scheduling controls
+### Phase 3: Creative Caching Enhancements (Week 5) - **Current**
+- [x] Cache warmup tooling & scheduling controls (`CACHE_WARMUP_TARGETS`, `npm run cache:warmup`)
+- [x] On-disk cache management script (`npm run cache:clear`)
 - [ ] Advanced monitoring (hit/miss dashboards, alert thresholds)
 - [ ] Configurable playback options (e.g., loop toggle) & HTML customization
 - **Milestone:** Ads display even during extended network interruptions with richer observability

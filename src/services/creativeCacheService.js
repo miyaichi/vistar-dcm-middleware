@@ -69,6 +69,7 @@ class CreativeCacheService {
     const requestedEnabled = requested == null ? defaultEnabled : requested !== 'false';
 
     this.enabled = requestedEnabled && process.env.MOCK_VISTAR_API === 'false';
+    this.defaults = this.resolveDefaults();
     this.cacheDir = path.resolve(
       resolveString(
         process.env.CACHE_DIR,
@@ -93,65 +94,80 @@ class CreativeCacheService {
     this.fetchImpl = ensureFetch();
   }
 
-  parseWarmTargets() {
-    const fallbackPlacement =
-      resolveString(process.env.CACHE_DEFAULT_PLACEMENT_ID, null) ||
-      resolveString(process.env.DEFAULT_CACHE_PLACEMENT_ID, null) ||
-      'creative-cache-default';
-    const fallbackVenue =
-      resolveString(process.env.CACHE_DEFAULT_VENUE_ID, null) ||
-      resolveString(process.env.DEFAULT_VENUE_ID, null) ||
-      resolveString(process.env.TEST_VENUE_ID, null) ||
-      null;
-    const fallbackDevice =
-      resolveString(process.env.CACHE_DEFAULT_DEVICE_ID, null) ||
-      resolveString(process.env.DEFAULT_DEVICE_ID, null) ||
-      resolveString(process.env.TEST_DEVICE_ID, null) ||
-      'VistarDisplay0';
-    const fallbackPlayer =
-      resolveString(process.env.CACHE_DEFAULT_PLAYER_MODEL, null) ||
-      resolveString(process.env.DEFAULT_PLAYER_MODEL, null) ||
-      'ME-DEC';
-
-    const parseTarget = (raw, index) => {
-      const [placement, venue, device, playerModel] = raw
-        .split(':')
-        .map((segment) => (segment && segment.trim()) || undefined);
-
-      const resolvedVenue = venue || fallbackVenue;
-      const resolvedDevice = device || fallbackDevice;
-
-      if (!resolvedVenue || !resolvedDevice) {
-        return null;
-      }
-
-      return {
-        placementId: placement || `${fallbackPlacement}-${index + 1}`,
-        venueId: resolvedVenue,
-        deviceId: resolvedDevice,
-        playerModel: playerModel || fallbackPlayer
-      };
+  resolveDefaults() {
+    return {
+      placementId:
+        resolveString(process.env.CACHE_DEFAULT_PLACEMENT_ID, null) ||
+        resolveString(process.env.DEFAULT_CACHE_PLACEMENT_ID, null) ||
+        'creative-cache-default',
+      venueId:
+        resolveString(process.env.CACHE_DEFAULT_VENUE_ID, null) ||
+        resolveString(process.env.DEFAULT_VENUE_ID, null) ||
+        resolveString(process.env.TEST_VENUE_ID, null) ||
+        null,
+      deviceId:
+        resolveString(process.env.CACHE_DEFAULT_DEVICE_ID, null) ||
+        resolveString(process.env.DEFAULT_DEVICE_ID, null) ||
+        resolveString(process.env.TEST_DEVICE_ID, null) ||
+        'VistarDisplay0',
+      playerModel:
+        resolveString(process.env.CACHE_DEFAULT_PLAYER_MODEL, null) ||
+        resolveString(process.env.DEFAULT_PLAYER_MODEL, null) ||
+        'ME-DEC'
     };
+  }
 
-    const envTargets = resolveString(process.env.CACHE_WARMUP_TARGETS);
-    if (envTargets) {
-      if (['disabled', 'none', 'off'].includes(envTargets.toLowerCase())) {
-        return [];
-      }
-
-      return envTargets
-        .split(',')
-        .map((entry, index) => parseTarget(entry, index))
-        .filter(Boolean);
+  parseTargetEntry(raw, index = 0, overrides = {}) {
+    if (!raw && !overrides.venueId && !overrides.deviceId && !this.defaults.venueId) {
+      return null;
     }
 
-    if (fallbackVenue && fallbackDevice) {
+    const [placement, venue, device, playerModel] = (raw || '')
+      .split(':')
+      .map((segment) => (segment && segment.trim()) || undefined);
+
+    const resolvedPlacement = placement || overrides.placementId || `${this.defaults.placementId}-${index + 1}`;
+    const resolvedVenue = venue || overrides.venueId || this.defaults.venueId;
+    const resolvedDevice = device || overrides.deviceId || this.defaults.deviceId;
+    const resolvedPlayer = playerModel || overrides.playerModel || this.defaults.playerModel;
+
+    if (!resolvedVenue || !resolvedDevice) {
+      return null;
+    }
+
+    return {
+      placementId: resolvedPlacement,
+      venueId: resolvedVenue,
+      deviceId: resolvedDevice,
+      playerModel: resolvedPlayer
+    };
+  }
+
+  parseTargetList(rawList, overrides = {}) {
+    if (!rawList || ['disabled', 'none', 'off'].includes(rawList.toLowerCase())) {
+      return [];
+    }
+
+    return rawList
+      .split(',')
+      .map((entry, index) => this.parseTargetEntry(entry, index, overrides))
+      .filter(Boolean);
+  }
+
+  parseWarmTargets() {
+    const envTargets = resolveString(process.env.CACHE_WARMUP_TARGETS);
+
+    if (envTargets) {
+      return this.parseTargetList(envTargets);
+    }
+
+    if (this.defaults.venueId && this.defaults.deviceId) {
       return [
         {
-          placementId: fallbackPlacement,
-          venueId: fallbackVenue,
-          deviceId: fallbackDevice,
-          playerModel: fallbackPlayer
+          placementId: this.defaults.placementId,
+          venueId: this.defaults.venueId,
+          deviceId: this.defaults.deviceId,
+          playerModel: this.defaults.playerModel
         }
       ];
     }
@@ -277,29 +293,48 @@ class CreativeCacheService {
     this.updateInProgress = true;
 
     try {
-      for (const target of this.targets) {
-        try {
-          const response = await vistarClient.fetchCreativeAssets(target);
-
-          if (response?.advertisement?.length) {
-            // eslint-disable-next-line no-await-in-loop
-            await this.cacheAdvertisements(response.advertisement);
-          }
-        } catch (error) {
-          this.lastError = error.message;
-          logger.warn('Creative cache target update failed', {
-            error: error.message,
-            target
-          });
-        }
-      }
-
-      this.lastUpdate = new Date().toISOString();
+      await this.warmTargets(this.targets);
       this.lastError = null;
+    } catch (error) {
+      this.lastError = error.message;
+      logger.warn('Creative cache target update failed', { error: error.message });
     } finally {
       this.updateInProgress = false;
       await this.cleanupStaleEntries();
     }
+  }
+
+  async fetchAndCacheTarget(target) {
+    const response = await vistarClient.fetchCreativeAssets(target);
+
+    if (response?.advertisement?.length) {
+      await this.cacheAdvertisements(response.advertisement);
+    } else {
+      logger.info('Creative cache warmup returned no creatives', target);
+    }
+  }
+
+  async warmTargets(targets = []) {
+    if (!this.enabled) {
+      logger.warn('Creative cache disabled; skipping warmup');
+      return;
+    }
+
+    const effectiveTargets = targets.length ? targets : this.targets;
+
+    if (!effectiveTargets.length) {
+      logger.warn('Creative cache warmup skipped (no targets configured)');
+      return;
+    }
+
+    await this.ensureReady();
+
+    for (const target of effectiveTargets) {
+      // eslint-disable-next-line no-await-in-loop
+      await this.fetchAndCacheTarget(target);
+    }
+
+    this.lastUpdate = new Date().toISOString();
   }
 
   async cacheAdvertisements(advertisements = []) {
@@ -513,6 +548,14 @@ class CreativeCacheService {
       lastError: this.lastError,
       targets: this.targets
     };
+  }
+
+  getConfiguredTargets() {
+    return [...this.targets];
+  }
+
+  parseTargetsFromInput(raw) {
+    return this.parseTargetList(raw);
   }
 
   getCacheDir() {
