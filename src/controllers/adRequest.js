@@ -51,7 +51,9 @@ const resolveLeaseTtl = (payload) => {
     return null;
   }
 
-  return Math.max(Math.min(...leaseDurations), 30);
+  const remainingLeaseSeconds = Math.min(...leaseDurations);
+  // Never cache past the remaining lease window to avoid proof_of_play rejections
+  return Math.max(remainingLeaseSeconds, 1);
 };
 
 const determineCacheTtl = (payload) =>
