@@ -357,21 +357,22 @@ npm run type-check
 
 ### Built-in Metrics
 
-The middleware exposes Prometheus metrics:
+When `ENABLE_METRICS=true`, `/metrics` exposes Prometheus counters/gauges for both the stub server
+and the creative cache:
 
-- `vistar_ad_requests_total` - Total ad requests
-- `vistar_ad_responses_total` - Total ad responses
-- `vistar_cache_hit_rate` - Cache hit rate percentage
-- `vistar_pop_success_rate` - PoP success rate
-- `vistar_display_time_latency` - Display time latency histogram
-- `vistar_pop_time_latency` - PoP time latency histogram
+- `vistar_stub_ad_requests_total`, `vistar_stub_cache_hits_total`, `vistar_stub_cache_misses_total`
+- `vistar_stub_pop_callbacks_total`, `vistar_api_success_total`, `vistar_api_failure_total`
+- `vistar_cache_warmups_total{result="success|failure"}`
+- `vistar_cache_assets_cached_total`
+- `vistar_cache_files` (gauge)
+- `vistar_cache_bytes` (gauge)
 
 ### Grafana Dashboard
 
-Import the provided dashboard:
-```bash
-# Located in monitoring/grafana-dashboard.json
-```
+Import `monitoring/grafana-dashboard.json` into Grafana (Home → Dashboards → New → Import) and set the
+Prometheus data source to the middleware scraper. The sample panels cover creative warmups, cache
+utilization, ad cache hits/misses, and Vistar API success/failure so you can inspect the system
+quickly during maintenance windows.
 
 ### Logging
 

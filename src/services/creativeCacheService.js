@@ -4,6 +4,11 @@ const crypto = require('crypto');
 
 const logger = require('../utils/logger');
 const vistarClient = require('../clients/vistarClient');
+const {
+  recordCreativeWarmup,
+  recordCreativeAssetsCached,
+  updateCreativeCacheStats
+} = require('../controllers/metrics');
 
 const bytesPerUnit = {
   KB: 1024,
@@ -306,9 +311,11 @@ class CreativeCacheService {
 
   async fetchAndCacheTarget(target) {
     const response = await vistarClient.fetchCreativeAssets(target);
+    const ads = Array.isArray(response?.advertisement) ? response.advertisement : [];
 
-    if (response?.advertisement?.length) {
-      await this.cacheAdvertisements(response.advertisement);
+    if (ads.length) {
+      await this.cacheAdvertisements(ads);
+      recordCreativeAssetsCached(ads.length);
     } else {
       logger.info('Creative cache warmup returned no creatives', target);
     }
@@ -330,11 +337,24 @@ class CreativeCacheService {
     await this.ensureReady();
 
     for (const target of effectiveTargets) {
-      // eslint-disable-next-line no-await-in-loop
-      await this.fetchAndCacheTarget(target);
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        await this.fetchAndCacheTarget(target);
+        recordCreativeWarmup('success');
+      } catch (error) {
+        recordCreativeWarmup('failure');
+        logger.warn('Creative cache warmup failed for target', {
+          target,
+          error: error.message
+        });
+      }
     }
 
     this.lastUpdate = new Date().toISOString();
+    updateCreativeCacheStats({
+      files: this.records.size,
+      totalBytes: this.totalBytes
+    });
   }
 
   async cacheAdvertisements(advertisements = []) {

@@ -39,12 +39,47 @@ const vistarApiFailureCounter = new client.Counter({
   registers: [register]
 });
 
+const creativeWarmupCounter = new client.Counter({
+  name: 'vistar_cache_warmups_total',
+  help: 'Creative cache warmup attempts',
+  labelNames: ['result'],
+  registers: [register]
+});
+
+const creativeAssetsCachedCounter = new client.Counter({
+  name: 'vistar_cache_assets_cached_total',
+  help: 'Number of creatives cached via warmup',
+  registers: [register]
+});
+
+const creativeCacheFilesGauge = new client.Gauge({
+  name: 'vistar_cache_files',
+  help: 'Number of files stored in the creative cache',
+  registers: [register]
+});
+
+const creativeCacheBytesGauge = new client.Gauge({
+  name: 'vistar_cache_bytes',
+  help: 'Total bytes stored in the creative cache',
+  registers: [register]
+});
+
 const recordAdRequest = () => adRequestCounter.inc();
 const recordCacheHit = () => cacheHitCounter.inc();
 const recordCacheMiss = () => cacheMissCounter.inc();
 const recordProofOfPlay = () => proofOfPlayCounter.inc();
 const recordVistarSuccess = () => vistarApiSuccessCounter.inc();
 const recordVistarFailure = () => vistarApiFailureCounter.inc();
+const recordCreativeWarmup = (result = 'success') => creativeWarmupCounter.inc({ result });
+const recordCreativeAssetsCached = (count = 0) => {
+  if (count > 0) {
+    creativeAssetsCachedCounter.inc(count);
+  }
+};
+const updateCreativeCacheStats = ({ files = 0, totalBytes = 0 } = {}) => {
+  creativeCacheFilesGauge.set(files);
+  creativeCacheBytesGauge.set(totalBytes);
+};
 
 const getMetrics = async (req, res, next) => {
   try {
@@ -63,5 +98,8 @@ module.exports = {
   recordCacheMiss,
   recordProofOfPlay,
   recordVistarSuccess,
-  recordVistarFailure
+  recordVistarFailure,
+  recordCreativeWarmup,
+  recordCreativeAssetsCached,
+  updateCreativeCacheStats
 };

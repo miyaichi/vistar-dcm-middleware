@@ -1,0 +1,12 @@
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+
+scrape_configs:
+  # Scrape the middleware's Prometheus endpoint.
+  - job_name: 'vistar-middleware'
+    static_configs:
+      - targets:
+          - 'middleware-hostname-or-ip:3000'
+        labels:
+          service: 'vistar-dcm-middleware'
