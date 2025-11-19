@@ -21,15 +21,15 @@ This middleware server acts as a bridge between DCM and Vistar Media's Ad Servin
     - USDP-R1000
 ```
 
-## Planned Features
+## Feature Roadmap
 
-- 🚧 **Ad Request/Response Handling** - Interfaces with Vistar Ad Serving API
-- 🚧 **Proof of Play (PoP) Tracking** - Accurate playback confirmation within 15 minutes
-- 📋 **Creative Caching** - Offline resilience using Vistar Creative Caching API (Phase 2)
-- 📋 **Multi-Player Support** - Optimized for different MEDIAEDGE player models (Phase 3)
-- 📋 **Dynamic Creative Support** - Real-time creative generation
-- 🚧 **HTML5 Player Generation** - Dynamic HTML generation for DCM URI assets
-- 📋 **Monitoring & Diagnostics** - Built-in metrics for Vistar integration health (Phase 4)
+- ✅ **Ad Request/Response Handling** – Live integration via `get_ad`, caching aligned to `lease_expiry`, retry/backoff logic
+- 🚧 **Proof of Play (PoP) Tracking** – Renderer fires Vistar PoP URLs; `/pop` endpoint remains a stub until MEDIAEDGE callback path is finalized
+- ✅ **Creative Caching** – Uses Vistar Creative Caching API (`get_asset`) with disk quota enforcement and warmup tooling
+- ✅ **Multi-Player Support** – Player-specific `supported_media` hints + request metadata (`playerModel`, `allow_audio`)
+- 📋 **Dynamic Creative Support** – Placeholder for runtime HTML manipulation/custom overlays
+- ✅ **HTML5 Player Generation** – Auto-generates player-safe HTML for MEDIAEDGE URI slots with asset fallback logic
+- ✅ **Monitoring & Diagnostics** – Rate limiting, request logging, Prometheus metrics, and Grafana dashboard
 
 **Legend:** ✅ Completed | 🚧 In Progress | 📋 Planned
 
@@ -43,11 +43,13 @@ This middleware server acts as a bridge between DCM and Vistar Media's Ad Servin
 
 ## Project Status
 
-- **Current Phase**: Phase 1 - Initial Development (Week 1-2)
-- **Version**: 0.1.0-alpha
-- **Vistar Integration Status**: Planning & Initial Implementation
+- **Current Phase**: Phase 2 – Live Vistar integration with creative caching
+- **Version**: 0.1.0-alpha (Docker + Node runtimes kept in sync)
+- **Vistar Integration**: `MOCK_VISTAR_API=false` routes `/ad` through `src/clients/vistarClient.js`, enforces credentials, retries, and honors `lease_expiry` for caching
+- **Creative Cache**: `creativeCacheService` downloads assets through Vistar's `get_asset` endpoint, enforces `CACHE_MAX_SIZE`, and warms targets via cron-style workers
+- **Monitoring**: Rate limiting, structured logging, and Prometheus metrics enabled; Grafana dashboard included under `monitoring/`
 - **Repository**: https://github.com/miyaichi/vistar-dcm-middleware
-- **Last Updated**: October 26, 2025
+- **Last Updated**: 2025-11-20
 
 ## Quick Start
 
@@ -100,9 +102,9 @@ docker-compose logs -f
 docker-compose down
 ```
 
-### Stubbed Middleware (Phase 1)
+### Stubbed Middleware Mode
 
-The current build includes lightweight stub controllers so the service can run end-to-end (including inside Docker) before the full Vistar integration is wired up. The stubs log every call and return predictable JSON payloads that make it easy to verify wiring and monitoring.
+Set `MOCK_VISTAR_API=true` (default) to exercise the middleware without making live Vistar calls. The mock controllers log every call and return deterministic payloads so wiring, caching, and monitoring can be verified even when the creative cache or API credentials are unavailable.
 
 | Endpoint | Purpose | Example |
 |----------|---------|---------|
@@ -312,16 +314,17 @@ API documentation will be added as endpoints are implemented.
 ```
 vistar-dcm-middleware/
 ├── src/
-│   ├── index.js              # Entry point
-│   ├── server.js             # Express server
-│   ├── config/               # Configuration
-│   ├── controllers/          # Request handlers
-│   ├── services/             # Business logic
-│   ├── middleware/           # Express middleware
-│   └── utils/                # Utilities
-├── tests/                    # Test files
-├── docs/                     # Documentation
-└── scripts/                  # Utility scripts
+│   ├── index.js          # Loads env, boots Express server
+│   ├── server.js         # HTTP wiring, middleware, routes
+│   ├── clients/          # External integrations (Vistar ad/asset APIs)
+│   ├── controllers/      # Route handlers (ad, PoP, cache, metrics, health)
+│   ├── middleware/       # Validators and API auth
+│   ├── services/         # Creative cache, cache manager, HTML renderer
+│   └── utils/            # Logger, helpers
+├── scripts/              # Cache warmup/maintenance CLIs
+├── tests/                # Jest unit/integration suites
+├── docs/                 # Integration approach, AGENT guide
+└── monitoring/           # Prometheus/Grafana assets
 ```
 
 ### Running Tests
