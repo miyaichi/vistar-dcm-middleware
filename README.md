@@ -134,9 +134,9 @@ device/venue). Use `./get_asset.sh` to inspect the exact payload that the warmup
 
 > Docker Compose automatically reads the `.env` file that sits next to `docker-compose.yml`, so the container now boots with the same values you use for local `npm start`.
 
-#### Locking down the stub server
+#### Locking down the API surface
 
-Set `API_AUTH_TOKEN` in `.env` to force every request to supply the same token via either the `X-API-Token` header or an `Authorization: Bearer <token>` header. Example:
+Set `API_AUTH_TOKEN` in `.env` to require a shared secret for every request (all routes, stub or live). Clients may pass the token via the `X-API-Token` header or `Authorization: Bearer <token>`. Example:
 
 ```bash
 echo "API_AUTH_TOKEN=change-me" >> .env
@@ -144,7 +144,7 @@ docker compose up -d --build
 curl -H "X-API-Token: change-me" "http://localhost:3000/ad?placementId=demo-screen"
 ```
 
-Requests without the token are rejected with `401 Unauthorized`, letting you integrate upstream systems safely even before the Vistar API calls are implemented.
+Requests without the token are rejected with `401 Unauthorized`, which lets you expose `/ad`, `/cached-assets`, and health endpoints to MEDIAEDGE or monitoring systems without opening the middleware publicly.
 
 With metrics enabled you also get counters for:
 - `vistar_stub_ad_requests_total`
