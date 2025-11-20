@@ -80,6 +80,22 @@ const buildMetadataBlock = ({ placementId, ad }) => {
   return `<div class="meta">${lines.join(' &middot; ')}</div>`;
 };
 
+const buildPopProxyUrl = (proofUrl, ad) => {
+  if (!proofUrl) {
+    return '';
+  }
+
+  const params = new URLSearchParams({ url: proofUrl });
+  if (ad?.event_id) {
+    params.append('eventId', String(ad.event_id));
+  }
+  if (ad?.display_time) {
+    params.append('display_time', String(ad.display_time));
+  }
+
+  return `/pop?${params.toString()}`;
+};
+
 const renderAdHtml = ({
   ad,
   placementId,
@@ -123,6 +139,7 @@ const renderAdHtml = ({
 
   const proofUrl = sanitizeUrl(ad.proof_of_play_url);
   const expirationUrl = sanitizeUrl(ad.expiration_url);
+  const popProxyUrl = buildPopProxyUrl(proofUrl, ad);
   const mediaElement = buildMediaElement({ ad, assetUrl });
 
   return `<!DOCTYPE html>
@@ -178,6 +195,7 @@ const renderAdHtml = ({
     <script>
       (function() {
         const proofUrl = ${JSON.stringify(proofUrl)};
+        const popProxyUrl = ${JSON.stringify(popProxyUrl)};
         const expirationUrl = ${JSON.stringify(expirationUrl)};
 
         const fire = (url) => {
@@ -185,7 +203,22 @@ const renderAdHtml = ({
           fetch(url, { method: 'GET', mode: 'no-cors' }).catch(() => {});
         };
 
-        window.addEventListener('load', () => fire(proofUrl), { once: true });
+        const fireProof = () => {
+          if (!popProxyUrl) {
+            fire(proofUrl);
+            return;
+          }
+
+          fetch(popProxyUrl, { method: 'GET', credentials: 'omit' })
+            .then((response) => {
+              if (!response.ok) {
+                throw new Error('PoP proxy failed');
+              }
+            })
+            .catch(() => fire(proofUrl));
+        };
+
+        window.addEventListener('load', fireProof, { once: true });
         window.addEventListener('beforeunload', () => fire(expirationUrl));
       })();
     </script>

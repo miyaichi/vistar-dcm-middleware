@@ -140,7 +140,12 @@ describe('Vistar DCM Middleware (stub)', () => {
     expect(status.body.keys).not.toContain('ad:clear-me');
   });
 
-  test('GET /pop requires eventId and echoes payload when provided', async () => {
+  test('GET /pop requires url and forwards PoP to its target', async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 204
+    });
+    global.fetch = fetchMock;
     const app = loadApp();
 
     await request(app)
@@ -149,12 +154,68 @@ describe('Vistar DCM Middleware (stub)', () => {
 
     const okResponse = await request(app)
       .get('/pop')
-      .query({ eventId: 'pop-event' })
+      .query({ url: 'https://pop.example.com/proof?id=123', eventId: 'pop-event' })
       .expect(200);
 
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://pop.example.com/proof?id=123',
+      expect.objectContaining({ method: 'GET' })
+    );
+
     expect(okResponse.body).toMatchObject({
-      status: 'acknowledged',
-      eventId: 'pop-event'
+      status: 'forwarded',
+      eventId: 'pop-event',
+      responseStatus: 204,
+      attempts: 1
+    });
+  });
+
+  test('GET /pop retries when upstream failures are retryable', async () => {
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 500
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200
+      });
+    global.fetch = fetchMock;
+    const app = loadApp({ POP_FORWARD_MAX_RETRIES: '2', POP_FORWARD_RETRY_DELAY_MS: '1' });
+
+    const okResponse = await request(app)
+      .get('/pop')
+      .query({ url: 'https://pop.example.com/retry' })
+      .expect(200);
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(okResponse.body).toMatchObject({
+      status: 'forwarded',
+      attempts: 2,
+      responseStatus: 200
+    });
+  });
+
+  test('GET /pop reflects upstream PoP failures', async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 410
+    });
+    global.fetch = fetchMock;
+    const app = loadApp();
+
+    const response = await request(app)
+      .get('/pop')
+      .query({ url: 'https://pop.example.com/expired' })
+      .expect(410);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(response.body).toMatchObject({
+      error: 'ProofOfPlaySendError',
+      message: expect.stringMatching(/410/),
+      attempts: 1
     });
   });
 

@@ -1,26 +1,71 @@
 const logger = require('../utils/logger');
 const { recordProofOfPlay } = require('./metrics');
+const { sendProofOfPlay, ProofOfPlaySendError } = require('../services/proofOfPlayService');
 
-const handleProofOfPlay = (req, res, next) => {
+const handleProofOfPlay = async (req, res, next) => {
+  const {
+    proofUrl,
+    eventId,
+    displayTime,
+    targetHost,
+    targetPath
+  } = req.popRequest || {};
+
+  const logContext = {
+    eventId,
+    targetHost,
+    targetPath,
+    displayTime
+  };
+
   try {
-    const { eventId } = req.query;
-
-    logger.info('Received proof-of-play callback (stub)', {
-      eventId,
-      query: req.query
-    });
-
+    logger.info('Received proof-of-play callback', logContext);
     recordProofOfPlay();
 
-    res.json({
-      status: 'acknowledged',
+    logger.info('Forwarding proof-of-play to Vistar', {
       eventId,
-      receivedAt: new Date().toISOString(),
-      note: 'Stub handler. Forward the payload to MEDIAEDGE or analytics pipeline when ready.'
+      targetHost,
+      targetPath
+    });
+
+    const result = await sendProofOfPlay({ url: proofUrl });
+
+    logger.info('Proof-of-play forwarded successfully', {
+      eventId,
+      targetHost,
+      targetPath,
+      responseStatus: result.status,
+      durationMs: result.durationMs,
+      attempts: result.attempts
+    });
+
+    res.json({
+      status: 'forwarded',
+      eventId,
+      targetHost,
+      responseStatus: result.status,
+      durationMs: result.durationMs,
+      attempts: result.attempts,
+      receivedAt: new Date().toISOString()
     });
   } catch (error) {
-    logger.error('Failed to process proof-of-play callback', { error: error.message });
-    next(error);
+    logger.error('Failed to forward proof-of-play callback', {
+      ...logContext,
+      error: error.message,
+      attempts: error.attempts
+    });
+
+    if (error instanceof ProofOfPlaySendError) {
+      return res.status(error.statusCode || 502).json({
+        error: error.name,
+        message: error.message,
+        eventId,
+        targetHost,
+        attempts: error.attempts
+      });
+    }
+
+    return next(error);
   }
 };
 

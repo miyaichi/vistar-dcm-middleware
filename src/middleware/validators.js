@@ -72,14 +72,85 @@ const validateAdRequest = (req, res, next) => {
   return next();
 };
 
-const validateProofOfPlay = (req, res, next) => {
-  const { eventId } = req.query;
-
-  if (!eventId || typeof eventId !== 'string' || !eventId.trim()) {
-    return respondBadRequest(res, 'eventId is required for PoP callbacks');
+const parseOptionalInteger = (value) => {
+  if (value == null) {
+    return undefined;
   }
 
-  req.query.eventId = eventId.trim();
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return undefined;
+    }
+
+    const parsed = parseInt(trimmed, 10);
+    if (!Number.isNaN(parsed)) {
+      return parsed;
+    }
+  }
+
+  return null;
+};
+
+const decodeUrlSafe = (value) => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  try {
+    return decodeURIComponent(trimmed);
+  } catch (error) {
+    return trimmed;
+  }
+};
+
+const validateProofOfPlay = (req, res, next) => {
+  const rawUrl = req.query.url || req.query.popUrl || req.query.proofUrl;
+
+  const decodedUrl = decodeUrlSafe(rawUrl);
+  if (!decodedUrl) {
+    return respondBadRequest(res, 'url query parameter is required for PoP forwarding');
+  }
+
+  let parsedUrl;
+  try {
+    parsedUrl = new URL(decodedUrl);
+  } catch (error) {
+    return respondBadRequest(res, 'url must be a valid HTTP(S) URL');
+  }
+
+  if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+    return respondBadRequest(res, 'url must use http or https');
+  }
+
+  const eventId = sanitizeOptionalString(req.query.eventId);
+  if (eventId === null) {
+    return respondBadRequest(res, 'eventId must be a string when provided');
+  }
+
+  const displayTimeRaw = req.query.display_time ?? req.query.displayTime;
+  const displayTime = parseOptionalInteger(displayTimeRaw);
+  if (displayTime === null) {
+    return respondBadRequest(res, 'display_time must be a number when provided');
+  }
+
+  req.popRequest = {
+    proofUrl: parsedUrl.toString(),
+    eventId,
+    displayTime,
+    targetHost: parsedUrl.hostname,
+    targetPath: parsedUrl.pathname || '/'
+  };
+
   return next();
 };
 

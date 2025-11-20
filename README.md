@@ -110,7 +110,7 @@ Set `MOCK_VISTAR_API=true` (default) to exercise the middleware without making l
 |----------|---------|---------|
 | `GET /health` | Basic liveness probe with uptime/hostname | `curl http://localhost:3000/health` |
 | `GET /ad?placementId=demo` | Returns a cached HTML5 placeholder creative; primed on first request | `curl "http://localhost:3000/ad?placementId=demo-screen"` |
-| `GET /pop` | Acknowledges PoP callbacks and echoes metadata (requires `eventId`) | `curl http://localhost:3000/pop?eventId=test` |
+| `GET /pop` | Forwards PoP URL to Vistar and logs the result (`url` query parameter required). `/ad` responses auto-call this endpoint from the HTML player and retry transient failures. | `curl "http://localhost:3000/pop?url=https%3A%2F%2Fpop.vistarmedia.com%2Fevent%3Fid%3D123"` |
 | `GET /metrics` | Prometheus metrics (enable via `ENABLE_METRICS=true`) | `curl http://localhost:3000/metrics` |
 | `GET /cache/status` | Inspect in-memory cache stats | `curl http://localhost:3000/cache/status` |
 | `POST /cache/invalidate` | Remove one cached placement by sending `{"placementId":"demo"}` | `curl -XPOST -H "Content-Type: application/json" -d '{"placementId":"demo"}' http://localhost:3000/cache/invalidate` |
