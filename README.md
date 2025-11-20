@@ -211,6 +211,10 @@ comma-separated. Use `off` (or `disabled`/`none`) to turn off warm-up. When this
 the cache falls back to the default venue/device (`DEFAULT_VENUE_ID`, `DEFAULT_DEVICE_ID`) so the
 canonical `VistarDisplay0` + `display-0` combination still warms automatically.
 
+Set `ALLOW_IFRAME_EMBEDDING=true` when the middleware must be displayed inside an iframe (e.g., looped QA playback).
+This disables Helmet's `X-Frame-Options` response header so MEDIAEDGE can load `/ad` within an iframe.
+Leave it `false` in production to keep browsers from framing the middleware response.
+
 > Verify your get_asset payload with `./get_asset.sh` (same format as described in
 > [Vistar’s Creative Caching endpoint](https://help.vistarmedia.com/hc/en-us/articles/224987348-Creative-caching-endpoint)).
 

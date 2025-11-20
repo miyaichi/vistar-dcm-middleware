@@ -29,9 +29,15 @@ app.use(
 );
 
 // Security middleware
-app.use(helmet({
-  contentSecurityPolicy: false, // Disable for HTML5 player generation
-}));
+const helmetOptions = {
+  contentSecurityPolicy: false // Disable for HTML5 player generation
+};
+
+if (process.env.ALLOW_IFRAME_EMBEDDING === 'true') {
+  helmetOptions.frameguard = false; // Allow middleware to be framed for test loops
+}
+
+app.use(helmet(helmetOptions));
 
 // CORS configuration
 const corsOptions = {
